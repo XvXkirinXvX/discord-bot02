@@ -74,27 +74,34 @@ client.once('clientReady', () => {
 
 // 💬 Commands
 const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
-// 🚫 Ignore blocked users
+
+client.on('messageCreate', message => {
+  if (message.author.bot) return;
+
+  // 🚫 Ignore blocked users
   if (blockedUsers.includes(message.author.id)) return;
 
   const msg = message.content;
-  if (!msg.startsWith(PREFIX)) return;
+
+  // ✅ case-insensitive prefix
+  if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
   const args = msg.slice(PREFIX.length).trim().split(/ +/);
-const commandName = args.shift().toLowerCase();
-  console.log("ARGS:", args);
-  const command = commands.get(commandName);
+  const commandName = args.shift().toLowerCase();
 
+  console.log("ARGS:", args);
+
+  const command = commands.get(commandName);
   if (!command) return;
 
   try {
     command.execute(message, args, client, {
-  blockedUsers,
-  saveBlockedUsers,
-  startAutoMessage,
-  stopAutoMessage,
-  connectVC
-});
+      blockedUsers,
+      saveBlockedUsers,
+      startAutoMessage,
+      stopAutoMessage,
+      connectVC
+    });
   } catch (err) {
     console.error(err);
     message.reply("Error executing command");
