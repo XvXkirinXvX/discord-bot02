@@ -22,7 +22,7 @@ function startAutoMessage(client, channelId) {
     } catch (err) {
       console.error("Auto message error:", err);
     }
-  }, 10 * 1000); // 10 seconds test
+  }, 60 * 60 * 1000); // 10 seconds test
 
   return true;
 }
