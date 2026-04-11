@@ -12,6 +12,8 @@ function normalize(text) {
 // 🚫 Regex patterns
 const bannedPatterns = [
   /rinki/,
+  /hao/,
+  /kuman/,
   /gay/,
   /homo/,
   /lesbian/,
