@@ -81,14 +81,25 @@ client.on('messageCreate', message => {
   // 🚫 Ignore blocked users
   if (blockedUsers.includes(message.author.id)) return;
 
-  const msg = message.content;
+  const msg = message.content.trim();
 
-  // ✅ case-insensitive prefix
+  // ✅ Case-insensitive prefix
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
-  const args = msg.slice(PREFIX.length).trim().split(/ +/);
-  const commandName = args.shift().toLowerCase();
+  // ✂️ Remove prefix safely
+  const content = msg.slice(PREFIX.length).trim();
 
+  // 🛑 Prevent empty commands (k! only)
+  if (!content) return;
+
+  // 🔍 Parse arguments
+  const args = content.split(/ +/);
+  const commandName = args.shift()?.toLowerCase();
+
+  // 🛑 Extra safety (shouldn't happen, but safe)
+  if (!commandName) return;
+
+  console.log("COMMAND:", commandName);
   console.log("ARGS:", args);
 
   const command = commands.get(commandName);
@@ -103,8 +114,8 @@ client.on('messageCreate', message => {
       connectVC
     });
   } catch (err) {
-    console.error(err);
-    message.reply("Error executing command");
+    console.error("Command error:", err);
+    message.reply("❌ Error executing command");
   }
 });
 
