@@ -1,8 +1,23 @@
+// 🛡️ Global error protection
+process.on('unhandledRejection', err => {
+  console.error("Unhandled Rejection:", err);
+});
+
+process.on('uncaughtException', err => {
+  console.error("Uncaught Exception:", err);
+});
+
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const blockedPath = './blocked.json';
 
-// Load blocked users
+// 🔐 Token safety
+if (!process.env.TOKEN) {
+  console.error("❌ TOKEN is missing!");
+  process.exit(1);
+}
+
+// 📁 Load blocked users
 let blockedUsers = [];
 if (fs.existsSync(blockedPath)) {
   try {
@@ -12,17 +27,19 @@ if (fs.existsSync(blockedPath)) {
   }
 }
 
-// Save helper
+// 💾 Save helper
 function saveBlockedUsers() {
   fs.writeFileSync(blockedPath, JSON.stringify(blockedUsers, null, 2));
 }
+
 const { PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
+
 const { 
   joinVoiceChannel, 
-  getVoiceConnection, 
   VoiceConnectionStatus 
 } = require('@discordjs/voice');
 
+// 🤖 Client
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -32,17 +49,30 @@ const client = new Client({
   ]
 });
 
-// 📂 Load commands
+// 📂 Load commands safely
 const commands = new Map();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 
 for (const file of commandFiles) {
-  const command = require(`./commands/${file}`);
-  commands.set(command.name, command);
+  try {
+    const command = require(`./commands/${file}`);
+    if (!command.name || typeof command.execute !== 'function') {
+      console.log(`⚠️ Invalid command file: ${file}`);
+      continue;
+    }
+    commands.set(command.name, command);
+  } catch (err) {
+    console.error(`❌ Failed to load ${file}:`, err);
+  }
 }
 
-// 🔊 Voice connection function
+// 🔊 Voice connection
+let reconnecting = false;
+
 function connectVC(client) {
+  if (reconnecting) return;
+  reconnecting = true;
+
   const guild = client.guilds.cache.get(GUILD_ID);
   if (!guild) return console.log("Guild not found");
 
@@ -59,44 +89,37 @@ function connectVC(client) {
 
   console.log("Joined voice channel");
 
-  // 🔁 Auto-reconnect
   connection.on(VoiceConnectionStatus.Disconnected, () => {
     console.log("Disconnected! Reconnecting...");
+    reconnecting = false;
     setTimeout(() => connectVC(client), 3000);
   });
 }
 
-// ✅ Ready event
-client.once('clientReady', () => {
+// ✅ Ready
+client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
   connectVC(client);
 });
 
-// 💬 Commands
+// 🔌 Autosend utils
 const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
 
-client.on('messageCreate', message => {
+// 💬 Command handler
+client.on('messageCreate', async message => {
   if (message.author.bot) return;
 
-  // 🚫 Ignore blocked users
   if (blockedUsers.includes(message.author.id)) return;
 
   const msg = message.content.trim();
 
-  // ✅ Case-insensitive prefix
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
-  // ✂️ Remove prefix safely
   const content = msg.slice(PREFIX.length).trim();
-
-  // 🛑 Prevent empty commands (k! only)
   if (!content) return;
 
-  // 🔍 Parse arguments
   const args = content.split(/ +/);
   const commandName = args.shift()?.toLowerCase();
-
-  // 🛑 Extra safety (shouldn't happen, but safe)
   if (!commandName) return;
 
   console.log("COMMAND:", commandName);
@@ -106,7 +129,7 @@ client.on('messageCreate', message => {
   if (!command) return;
 
   try {
-    command.execute(message, args, client, {
+    await command.execute(message, args, client, {
       blockedUsers,
       saveBlockedUsers,
       startAutoMessage,
@@ -115,11 +138,13 @@ client.on('messageCreate', message => {
     });
   } catch (err) {
     console.error("Command error:", err);
-    message.reply("❌ Error executing command");
+    try {
+      await message.reply("❌ Error executing command");
+    } catch {}
   }
 });
 
-// 👥 Voice activity logging
+// 👥 Voice logs
 client.on('voiceStateUpdate', (oldState, newState) => {
   if (!oldState.channelId && newState.channelId) {
     console.log(`${newState.member.user.tag} joined VC`);
@@ -130,8 +155,8 @@ client.on('voiceStateUpdate', (oldState, newState) => {
   }
 });
 
-
+// 🚀 Start bot
 client.login(process.env.TOKEN);
 
-// Export for rejoin command
+// Export
 module.exports = { connectVC };
