@@ -17,7 +17,7 @@ function startAutoMessage(client, channelId) {
       }
 
       console.log("Sending message...");
-      await channel.send("yes");
+      await channel.send("i'm still standing");
 
     } catch (err) {
       console.error("Auto message error:", err);
