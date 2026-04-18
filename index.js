@@ -112,6 +112,43 @@ client.on('messageCreate', async message => {
 
   if (blockedUsers.includes(message.author.id)) return;
 
+  // 💤 Remove AFK when user talks
+if (afkUsers.has(message.author.id)) {
+  afkUsers.delete(message.author.id);
+  try {
+    await message.reply("👋 Welcome back, you are no longer AFK.");
+  } catch {}
+}
+
+// 📣 Notify if mentioning AFK user
+if (message.mentions.users.size > 0) {
+  message.mentions.users.forEach(user => {
+    if (afkUsers.has(user.id)) {
+      const afkData = afkUsers.get(user.id);
+
+      const diff = Date.now() - afkData.time;
+
+      const seconds = Math.floor(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+
+      let timeText;
+
+      if (hours > 0) {
+        timeText = `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        timeText = `${minutes}m`;
+      } else {
+        timeText = `${seconds}s`;
+      }
+
+      message.reply(
+        `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
+      );
+    }
+  });
+}
+  
   const msg = message.content.trim();
 
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
