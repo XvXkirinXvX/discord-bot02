@@ -135,7 +135,8 @@ client.on('messageCreate', async message => {
       saveBlockedUsers,
       startAutoMessage,
       stopAutoMessage,
-      connectVC
+      connectVC,
+      afkUsers
     });
   } catch (err) {
     console.error("Command error:", err);
