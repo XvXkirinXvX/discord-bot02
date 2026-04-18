@@ -1,7 +1,17 @@
+const { OWNER_ID } = require('../config');
+
 module.exports = {
   name: "afk",
   execute(message, args, client, { afkUsers }) {
-    const reason = args.join(" ") || "AFK";
+
+    let reason;
+
+    // 👑 Owner default reason
+    if (!args.length && message.author.id === OWNER_ID) {
+      reason = "Busy (Owner AFK)";
+    } else {
+      reason = args.join(" ") || "AFK";
+    }
 
     afkUsers.set(message.author.id, {
       reason,
