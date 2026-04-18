@@ -8,6 +8,7 @@ process.on('uncaughtException', err => {
 });
 
 const { Client, GatewayIntentBits } = require('discord.js');
+const afkUsers = new Map();
 const fs = require('fs');
 const blockedPath = './blocked.json';
 
