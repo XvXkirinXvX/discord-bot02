@@ -9,6 +9,7 @@ process.on('uncaughtException', err => {
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
+
 const AUTO_DELETE_DELAY = 30000;
 let autoDeleteEnabled = process.env.NODE_ENV !== "production";
 
@@ -39,10 +40,7 @@ function saveBlockedUsers() {
   fs.writeFileSync(blockedPath, JSON.stringify(blockedUsers, null, 2));
 }
 
-const { 
-  joinVoiceChannel, 
-  VoiceConnectionStatus 
-} = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
 
 // 🤖 Client
 const client = new Client({
@@ -106,7 +104,7 @@ client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
   connectVC(client);
 
-  // 🧹 Auto-delete reply patch (dynamic)
+  // 🧹 Auto-delete reply patch (SAFE + dynamic)
   const { Message } = require("discord.js");
   const originalReply = Message.prototype.reply;
 
@@ -124,22 +122,6 @@ client.once('ready', () => {
 
   console.log(`🧹 Auto-delete system initialized (${autoDeleteEnabled ? "ON" : "OFF"})`);
 });
-  // ✅ dynamic check (can change anytime)
-  if (autoDeleteEnabled && msg.author.id === this.client.user.id) {
-    setTimeout(() => {
-      msg.delete().catch(() => {});
-    }, AUTO_DELETE_DELAY);
-  }
-
-  return msg;
-
-console.log("🧹 Auto-delete system initialized");
-
-    console.log("🧹 Auto-delete replies ENABLED");
-  } else {
-    console.log("🧹 Auto-delete replies DISABLED");
-  }
-});
 
 // 🔌 Autosend utils
 const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
@@ -151,7 +133,7 @@ client.on('messageCreate', async message => {
 
   const now = Date.now();
 
-  // 📣 AFK mention system FIRST (before removing AFK)
+  // 📣 AFK mention system
   if (message.mentions.users.size > 0) {
     for (const user of message.mentions.users.values()) {
       if (!afkUsers.has(user.id)) continue;
@@ -169,13 +151,9 @@ client.on('messageCreate', async message => {
       const hours = Math.floor(minutes / 60);
 
       let timeText;
-      if (hours > 0) {
-        timeText = `${hours}h ${minutes % 60}m`;
-      } else if (minutes > 0) {
-        timeText = `${minutes}m`;
-      } else {
-        timeText = `${seconds}s`;
-      }
+      if (hours > 0) timeText = `${hours}h ${minutes % 60}m`;
+      else if (minutes > 0) timeText = `${minutes}m`;
+      else timeText = `${seconds}s`;
 
       try {
         await message.reply(
@@ -185,7 +163,7 @@ client.on('messageCreate', async message => {
     }
   }
 
-  // 💤 Remove AFK AFTER mention check
+  // 💤 Remove AFK
   if (afkUsers.has(message.author.id)) {
     afkUsers.delete(message.author.id);
 
@@ -194,8 +172,6 @@ client.on('messageCreate', async message => {
     try {
       if (member.manageable) {
         let currentNick = member.nickname || member.user.username;
-
-        // ✅ REMOVE [AFK] ANYWHERE (not just start)
         const newNick = currentNick.replace(/\[AFK\]\s*/gi, "").trim();
 
         if (newNick !== currentNick) {
@@ -208,9 +184,9 @@ client.on('messageCreate', async message => {
 
     try {
       if (message.author.id === OWNER_ID) {
-        const msg = await message.reply("💕welcome back sayang😘💕");
+        await message.reply("💕welcome back sayang😘💕");
       } else {
-        const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
+        await message.reply("👋 Welcome back, you are no longer AFK.");
       }
     } catch {}
   }
@@ -235,15 +211,15 @@ client.on('messageCreate', async message => {
 
   try {
     await command.execute(message, args, client, {
-  blockedUsers,
-  saveBlockedUsers,
-  startAutoMessage,
-  stopAutoMessage,
-  connectVC,
-  afkUsers,
-  getAutoDelete: () => autoDeleteEnabled,
-  setAutoDelete: (value) => autoDeleteEnabled = value
-});
+      blockedUsers,
+      saveBlockedUsers,
+      startAutoMessage,
+      stopAutoMessage,
+      connectVC,
+      afkUsers,
+      getAutoDelete: () => autoDeleteEnabled,
+      setAutoDelete: (value) => autoDeleteEnabled = value
+    });
   } catch (err) {
     console.error("Command error:", err);
     try {
