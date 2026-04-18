@@ -141,7 +141,7 @@ if (afkUsers.has(message.author.id)) {
 
   try {
     if (message.author.id === OWNER_ID) {
-      const msg = await message.reply("👑 The owner has returned from AFK.");
+      const msg = await message.reply("💕welcome back sayang😘💕");
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     } else {
       const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
