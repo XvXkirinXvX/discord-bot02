@@ -9,6 +9,8 @@ process.on('uncaughtException', err => {
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
+const AUTO_DELETE_DELAY = 30000;
+let autoDeleteEnabled = process.env.NODE_ENV !== "production";
 
 const afkUsers = new Map();
 const afkCooldown = new Map();
@@ -103,6 +105,41 @@ function connectVC(client) {
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
   connectVC(client);
+
+  // 🧹 Auto-delete reply patch (dynamic)
+  const { Message } = require("discord.js");
+  const originalReply = Message.prototype.reply;
+
+  Message.prototype.reply = async function (...args) {
+    const msg = await originalReply.apply(this, args);
+
+    if (autoDeleteEnabled && msg.author.id === this.client.user.id) {
+      setTimeout(() => {
+        msg.delete().catch(() => {});
+      }, AUTO_DELETE_DELAY);
+    }
+
+    return msg;
+  };
+
+  console.log(`🧹 Auto-delete system initialized (${autoDeleteEnabled ? "ON" : "OFF"})`);
+});
+  // ✅ dynamic check (can change anytime)
+  if (autoDeleteEnabled && msg.author.id === this.client.user.id) {
+    setTimeout(() => {
+      msg.delete().catch(() => {});
+    }, AUTO_DELETE_DELAY);
+  }
+
+  return msg;
+};
+
+console.log("🧹 Auto-delete system initialized");
+
+    console.log("🧹 Auto-delete replies ENABLED");
+  } else {
+    console.log("🧹 Auto-delete replies DISABLED");
+  }
 });
 
 // 🔌 Autosend utils
@@ -173,10 +210,8 @@ client.on('messageCreate', async message => {
     try {
       if (message.author.id === OWNER_ID) {
         const msg = await message.reply("💕welcome back sayang😘💕");
-        setTimeout(() => msg.delete().catch(() => {}), 5000);
       } else {
         const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
-        setTimeout(() => msg.delete().catch(() => {}), 5000);
       }
     } catch {}
   }
@@ -201,13 +236,15 @@ client.on('messageCreate', async message => {
 
   try {
     await command.execute(message, args, client, {
-      blockedUsers,
-      saveBlockedUsers,
-      startAutoMessage,
-      stopAutoMessage,
-      connectVC,
-      afkUsers
-    });
+  blockedUsers,
+  saveBlockedUsers,
+  startAutoMessage,
+  stopAutoMessage,
+  connectVC,
+  afkUsers,
+  getAutoDelete: () => autoDeleteEnabled,
+  setAutoDelete: (value) => autoDeleteEnabled = value
+});
   } catch (err) {
     console.error("Command error:", err);
     try {
