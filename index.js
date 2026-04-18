@@ -8,8 +8,11 @@ process.on('uncaughtException', err => {
 });
 
 const { Client, GatewayIntentBits } = require('discord.js');
+const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
+
 const afkUsers = new Map();
-const afkCooldown = new Map(); // userId → last notified timestamp
+const afkCooldown = new Map();
+
 const fs = require('fs');
 const blockedPath = './blocked.json';
 
@@ -33,8 +36,6 @@ if (fs.existsSync(blockedPath)) {
 function saveBlockedUsers() {
   fs.writeFileSync(blockedPath, JSON.stringify(blockedUsers, null, 2));
 }
-
-const { PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
 
 const { 
   joinVoiceChannel, 
@@ -110,54 +111,60 @@ const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
 // 💬 Command handler
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
-
   if (blockedUsers.includes(message.author.id)) return;
 
-  // 💤 Remove AFK when user talks
-if (afkUsers.has(message.author.id)) {
-  afkUsers.delete(message.author.id);
-  try {
-    await message.reply("👋 Welcome back, you are no longer AFK.");
-  } catch {}
-}
+  // 💤 Remove AFK when user talks (WITH OWNER SPECIAL)
+  if (afkUsers.has(message.author.id)) {
+    afkUsers.delete(message.author.id);
 
-// 📣 Notify if mentioning AFK user (anti-spam 30s)
-if (message.mentions.users.size > 0) {
-  message.mentions.users.forEach(user => {
-    if (!afkUsers.has(user.id)) return;
+    try {
+      if (message.author.id === OWNER_ID) {
+        const msg = await message.reply("👑 The owner has returned from AFK.");
+        setTimeout(() => msg.delete().catch(() => {}), 5000);
+      } else {
+        const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
+        setTimeout(() => msg.delete().catch(() => {}), 5000);
+      }
+    } catch {}
+  }
 
-    const now = Date.now();
-    const last = afkCooldown.get(user.id) || 0;
+  // 📣 AFK mention system (anti-spam 30s)
+  if (message.mentions.users.size > 0) {
+    for (const user of message.mentions.users.values()) {
+      if (!afkUsers.has(user.id)) continue;
 
-    // ⛔ 30s cooldown
-    if (now - last < 30 * 1000) return;
+      const now = Date.now();
+      const last = afkCooldown.get(user.id) || 0;
 
-    afkCooldown.set(user.id, now);
+      if (now - last < 30 * 1000) continue;
 
-    const afkData = afkUsers.get(user.id);
-    const diff = now - afkData.time;
+      afkCooldown.set(user.id, now);
 
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
+      const afkData = afkUsers.get(user.id);
+      const diff = now - afkData.time;
 
-    let timeText;
-    if (hours > 0) {
-      timeText = `${hours}h ${minutes % 60}m`;
-    } else if (minutes > 0) {
-      timeText = `${minutes}m`;
-    } else {
-      timeText = `${seconds}s`;
+      const seconds = Math.floor(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+
+      let timeText;
+      if (hours > 0) {
+        timeText = `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        timeText = `${minutes}m`;
+      } else {
+        timeText = `${seconds}s`;
+      }
+
+      try {
+        await message.reply(
+          `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
+        );
+      } catch {}
     }
+  }
 
-    message.reply(
-      `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
-    );
-  });
-}
-  
   const msg = message.content.trim();
-
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
   const content = msg.slice(PREFIX.length).trim();
