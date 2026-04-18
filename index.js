@@ -120,9 +120,20 @@ client.on('messageCreate', async message => {
   const member = message.member;
 
   // 🔄 Restore nickname
+if (afkUsers.has(message.author.id)) {
+  afkUsers.delete(message.author.id);
+
+  const member = message.member;
+
+  // 🧹 Remove ONLY [AFK], keep custom nickname
   try {
-    if (member.manageable && data.originalNick) {
-      await member.setNickname(data.originalNick);
+    if (member.manageable) {
+      let currentNick = member.nickname || member.user.username;
+
+      if (currentNick.startsWith("[AFK]")) {
+        const newNick = currentNick.replace(/^\[AFK\]\s*/, "");
+        await member.setNickname(newNick);
+      }
     }
   } catch (err) {
     console.log("Nickname restore failed:", err.message);
@@ -130,7 +141,7 @@ client.on('messageCreate', async message => {
 
   try {
     if (message.author.id === OWNER_ID) {
-      const msg = await message.reply("💕welcome back sayang💕");
+      const msg = await message.reply("👑 The owner has returned from AFK.");
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     } else {
       const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
@@ -138,7 +149,6 @@ client.on('messageCreate', async message => {
     }
   } catch {}
 }
-
   // 📣 AFK mention system (anti-spam 30s)
   if (message.mentions.users.size > 0) {
     for (const user of message.mentions.users.values()) {
