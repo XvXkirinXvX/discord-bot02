@@ -2,11 +2,7 @@ const { OWNER_ID } = require('../config');
 
 module.exports = {
   name: "afk",
-  async execute(message, args, client, { afkUsers }) {
-
-    if (message.author.id !== OWNER_ID) {
-      return message.reply("❌ Only the bot owner can use this command.");
-    }
+  async execute(message, args, client, { afkUsers }) 
 
     let reason = args.join(" ") || "Busy (Owner AFK)";
 
