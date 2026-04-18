@@ -1,10 +1,9 @@
-const { OWNER_ID } = require('../config');
-
 module.exports = {
   name: "afk",
-  async execute(message, args, client, { afkUsers })
+  async execute(message, args, client, { afkUsers }) {
 
-    const reason = args.join(" ") || "Busy (Owner AFK)";
+    const reason = args.join(" ") || "AFK";
+
     const member = message.member;
 
     afkUsers.set(message.author.id, {
@@ -12,19 +11,29 @@ module.exports = {
       time: Date.now()
     });
 
-    // 🏷️ Add [AFK] only if not already present
+    // 🏷️ Add [AFK] if not already anywhere in nickname
     try {
       if (member.manageable) {
         const currentNick = member.nickname || member.user.username;
 
-        if (!currentNick.startsWith("[AFK]")) {
-          await member.setNickname(`[AFK] ${currentNick}`);
+        // check [AFK] anywhere (case-insensitive)
+        if (!/\[afk\]/i.test(currentNick)) {
+          let newNick = `[AFK] ${currentNick}`;
+
+          // 🔒 prevent nickname too long (max 32 chars)
+          if (newNick.length > 32) {
+            newNick = newNick.slice(0, 32);
+          }
+
+          await member.setNickname(newNick);
         }
       }
     } catch (err) {
       console.log("Nickname set failed:", err.message);
     }
 
-    message.reply(`😴 You are now AFK: ${reason}`);
+    try {
+      await message.reply(`😴 You are now AFK: ${reason}`);
+    } catch {}
   }
 };
