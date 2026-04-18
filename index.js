@@ -9,6 +9,7 @@ process.on('uncaughtException', err => {
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const afkUsers = new Map();
+const afkCooldown = new Map(); // userId → last notified timestamp
 const fs = require('fs');
 const blockedPath = './blocked.json';
 
