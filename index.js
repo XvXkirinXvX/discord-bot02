@@ -132,7 +132,6 @@ client.once('ready', () => {
   }
 
   return msg;
-};
 
 console.log("🧹 Auto-delete system initialized");
 
