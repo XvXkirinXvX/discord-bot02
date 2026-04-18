@@ -113,50 +113,14 @@ client.on('messageCreate', async message => {
   if (message.author.bot) return;
   if (blockedUsers.includes(message.author.id)) return;
 
- if (afkUsers.has(message.author.id)) {
-  const data = afkUsers.get(message.author.id);
-  afkUsers.delete(message.author.id);
+  const now = Date.now();
 
-  const member = message.member;
-
-  // 🔄 Restore nickname
-if (afkUsers.has(message.author.id)) {
-  afkUsers.delete(message.author.id);
-
-  const member = message.member;
-
-  // 🧹 Remove ONLY [AFK], keep custom nickname
-  try {
-    if (member.manageable) {
-      let currentNick = member.nickname || member.user.username;
-
-      if (currentNick.startsWith("[AFK]")) {
-        const newNick = currentNick.replace(/^\[AFK\]\s*/, "");
-        await member.setNickname(newNick);
-      }
-    }
-  } catch (err) {
-    console.log("Nickname restore failed:", err.message);
-  }
-
-  try {
-    if (message.author.id === OWNER_ID) {
-      const msg = await message.reply("💕welcome back sayang😘💕");
-      setTimeout(() => msg.delete().catch(() => {}), 5000);
-    } else {
-      const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
-      setTimeout(() => msg.delete().catch(() => {}), 5000);
-    }
-  } catch {}
-}
-  // 📣 AFK mention system (anti-spam 30s)
+  // 📣 AFK mention system FIRST (before removing AFK)
   if (message.mentions.users.size > 0) {
     for (const user of message.mentions.users.values()) {
       if (!afkUsers.has(user.id)) continue;
 
-      const now = Date.now();
       const last = afkCooldown.get(user.id) || 0;
-
       if (now - last < 30 * 1000) continue;
 
       afkCooldown.set(user.id, now);
@@ -185,7 +149,41 @@ if (afkUsers.has(message.author.id)) {
     }
   }
 
+  // 💤 Remove AFK AFTER mention check
+  if (afkUsers.has(message.author.id)) {
+    afkUsers.delete(message.author.id);
+
+    const member = message.member;
+
+    try {
+      if (member.manageable) {
+        let currentNick = member.nickname || member.user.username;
+
+        // ✅ REMOVE [AFK] ANYWHERE (not just start)
+        const newNick = currentNick.replace(/\[AFK\]\s*/gi, "").trim();
+
+        if (newNick !== currentNick) {
+          await member.setNickname(newNick);
+        }
+      }
+    } catch (err) {
+      console.log("Nickname restore failed:", err.message);
+    }
+
+    try {
+      if (message.author.id === OWNER_ID) {
+        const msg = await message.reply("💕welcome back sayang😘💕");
+        setTimeout(() => msg.delete().catch(() => {}), 5000);
+      } else {
+        const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
+        setTimeout(() => msg.delete().catch(() => {}), 5000);
+      }
+    } catch {}
+  }
+
+  // 💬 Command system
   const msg = message.content.trim();
+
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
   const content = msg.slice(PREFIX.length).trim();
