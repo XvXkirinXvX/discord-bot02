@@ -8,7 +8,7 @@ module.exports = {
 
     // 👑 Owner default reason
     if (!args.length && message.author.id === OWNER_ID) {
-      reason = "Busy (Owner AFK)";
+      reason = "Suami ku sibuk, jangan di ganggu";
     } else {
       reason = args.join(" ") || "AFK";
     }
