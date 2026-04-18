@@ -113,20 +113,31 @@ client.on('messageCreate', async message => {
   if (message.author.bot) return;
   if (blockedUsers.includes(message.author.id)) return;
 
-  // 💤 Remove AFK when user talks (WITH OWNER SPECIAL)
-  if (afkUsers.has(message.author.id)) {
-    afkUsers.delete(message.author.id);
+ if (afkUsers.has(message.author.id)) {
+  const data = afkUsers.get(message.author.id);
+  afkUsers.delete(message.author.id);
 
-    try {
-      if (message.author.id === OWNER_ID) {
-        const msg = await message.reply("💕welcome back my suami💕`");
-        setTimeout(() => msg.delete().catch(() => {}), 5000);
-      } else {
-        const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
-        setTimeout(() => msg.delete().catch(() => {}), 5000);
-      }
-    } catch {}
+  const member = message.member;
+
+  // 🔄 Restore nickname
+  try {
+    if (member.manageable && data.originalNick) {
+      await member.setNickname(data.originalNick);
+    }
+  } catch (err) {
+    console.log("Nickname restore failed:", err.message);
   }
+
+  try {
+    if (message.author.id === OWNER_ID) {
+      const msg = await message.reply("💕welcome back sayang💕");
+      setTimeout(() => msg.delete().catch(() => {}), 5000);
+    } else {
+      const msg = await message.reply("👋 Welcome back, you are no longer AFK.");
+      setTimeout(() => msg.delete().catch(() => {}), 5000);
+    }
+  } catch {}
+}
 
   // 📣 AFK mention system (anti-spam 30s)
   if (message.mentions.users.size > 0) {
