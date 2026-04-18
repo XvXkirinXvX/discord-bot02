@@ -121,32 +121,38 @@ if (afkUsers.has(message.author.id)) {
   } catch {}
 }
 
-// 📣 Notify if mentioning AFK user
+// 📣 Notify if mentioning AFK user (anti-spam 30s)
 if (message.mentions.users.size > 0) {
   message.mentions.users.forEach(user => {
-    if (afkUsers.has(user.id)) {
-      const afkData = afkUsers.get(user.id);
+    if (!afkUsers.has(user.id)) return;
 
-      const diff = Date.now() - afkData.time;
+    const now = Date.now();
+    const last = afkCooldown.get(user.id) || 0;
 
-      const seconds = Math.floor(diff / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours = Math.floor(minutes / 60);
+    // ⛔ 30s cooldown
+    if (now - last < 30 * 1000) return;
 
-      let timeText;
+    afkCooldown.set(user.id, now);
 
-      if (hours > 0) {
-        timeText = `${hours}h ${minutes % 60}m`;
-      } else if (minutes > 0) {
-        timeText = `${minutes}m`;
-      } else {
-        timeText = `${seconds}s`;
-      }
+    const afkData = afkUsers.get(user.id);
+    const diff = now - afkData.time;
 
-      message.reply(
-        `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
-      );
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    let timeText;
+    if (hours > 0) {
+      timeText = `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+      timeText = `${minutes}m`;
+    } else {
+      timeText = `${seconds}s`;
     }
+
+    message.reply(
+      `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
+    );
   });
 }
   
