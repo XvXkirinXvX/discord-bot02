@@ -25,6 +25,6 @@ module.exports = {
       return message.reply("🛑 Auto-delete DISABLED");
     }
 
-    return message.reply("Usage: !autodelete on/off");
+    return message.reply("Usage: cw!autodelete on/off");
   }
 };
