@@ -157,7 +157,7 @@ client.on('messageCreate', async message => {
 
       try {
         await message.reply(
-          `⏰ ${user.tag} is AFK: ${afkData.reason} (since ${timeText} ago)`
+          `⏰ ${message.guild.members.cache.get(user.id)?.displayName || user.username} is AFK: ${afkData.reason} (since ${timeText} ago)`
         );
       } catch {}
     }
