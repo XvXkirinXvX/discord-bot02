@@ -184,7 +184,7 @@ client.on('messageCreate', async message => {
 
     try {
       if (message.author.id === OWNER_ID) {
-        await message.reply("💕welcome back sayang😘💕");
+        await message.reply("💕welcome back owner tercinta💕");
       } else {
         await message.reply("👋 Welcome back, you are no longer AFK.");
       }
