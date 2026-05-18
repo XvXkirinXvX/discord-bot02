@@ -6,30 +6,45 @@ const {
 } = require('../config');
 
 // ✂️ Prevent Discord 2000 char limit
-function trim(text, max = 1800) {
-  if (!text) return "[Empty]";
+function trim(text = "", max = 1800) {
+  const safe = String(text || "[Empty]");
 
-  return text.length > max
-    ? text.slice(0, max) + "... [TRUNCATED]"
-    : text;
+  return safe.length > max
+    ? safe.slice(0, max) + "... [TRUNCATED]"
+    : safe;
 }
 
 // 📎 Attachment formatter
 function getAttachments(message) {
-  if (!message.attachments?.size) return "";
+  try {
+    if (!message?.attachments?.size) return "";
 
-  return "\nATTACHMENTS:\n" +
-    message.attachments.map(a => a.url).join("\n");
+    const urls = [...message.attachments.values()]
+      .map(a => a.url)
+      .filter(Boolean);
+
+    if (!urls.length) return "";
+
+    return `\nATTACHMENTS:\n${urls.join("\n")}`;
+
+  } catch {
+    return "";
+  }
 }
 
 // 📤 Send log safely
 async function sendLog(client, channelId, content) {
   try {
-    const channel = await client.channels.fetch(channelId);
+    if (!client || !channelId) return;
+
+    const channel = await client.channels.fetch(channelId).catch(() => null);
 
     if (!channel || !channel.isTextBased()) return;
 
-    await channel.send(trim(content, 1900));
+   await channel.send({
+  content: trim(content, 1900),
+  allowedMentions: { parse: [] }
+});
 
   } catch (err) {
     console.error("Log send error:", err);
@@ -39,22 +54,24 @@ async function sendLog(client, channelId, content) {
 // 📝 Message log
 async function logMessage(client, message) {
   try {
-    if (!message?.author || message.author.bot) return;
+    if (
+      !message ||
+      !message.author ||
+      message.author.bot ||
+      message.webhookId
+    ) return;
 
     const channelName = message.channel?.name || "unknown";
     const serverName = message.guild?.name || "DM";
 
-    await sendLog(
-      client,
-      LOG_CHANNEL_MESSAGE,
-      `📝 **MESSAGE**
-SERVER: ${serverName}
-CHANNEL: #${channelName}
-USER: ${message.author.tag}
+    const content =
+      `📝 **MESSAGE**\n` +
+      `SERVER: ${serverName}\n` +
+      `CHANNEL: #${channelName}\n` +
+      `USER: ${message.author.tag} (${message.author.id})\n\n` +
+      `${trim(message.content)}${getAttachments(message)}`;
 
-${trim(message.content)}
-${getAttachments(message)}`
-    );
+    await sendLog(client, LOG_CHANNEL_MESSAGE, content);
 
   } catch (err) {
     console.error("Message log error:", err);
@@ -64,28 +81,31 @@ ${getAttachments(message)}`
 // ✏️ Edit log
 async function logEdit(client, oldMsg, newMsg) {
   try {
-    if (!oldMsg?.author || oldMsg.author.bot) return;
+    if (
+      !oldMsg ||
+      !newMsg ||
+      !newMsg.author ||
+      newMsg.author.bot ||
+      newMsg.webhookId
+    ) return;
 
-    if (oldMsg.content === newMsg.content) return;
+    // Ignore unchanged edits
+    if ((oldMsg.content || "") === (newMsg.content || "")) return;
 
     const channelName = newMsg.channel?.name || "unknown";
     const serverName = newMsg.guild?.name || "DM";
 
-    await sendLog(
-      client,
-      LOG_CHANNEL_EDIT,
-      `✏️ **EDIT**
-SERVER: ${serverName}
-CHANNEL: #${channelName}
-USER: ${newMsg.author.tag}
+    const content =
+      `✏️ **EDIT**\n` +
+      `SERVER: ${serverName}\n` +
+      `CHANNEL: #${channelName}\n` +
+      `USER: ${newMsg.author.tag} (${newMsg.author.id})\n\n` +
+      `BEFORE:\n${trim(oldMsg.content)}\n\n` +
+      `AFTER:\n${trim(newMsg.content)}` +
+      `\n\nOLD ATTACHMENTS:${getAttachments(oldMsg) || "\nNone"}\n` +
+`\nNEW ATTACHMENTS:${getAttachments(newMsg) || "\nNone"}`;
 
-BEFORE:
-${trim(oldMsg.content)}
-
-AFTER:
-${trim(newMsg.content)}
-${getAttachments(newMsg)}`
-    );
+    await sendLog(client, LOG_CHANNEL_EDIT, content);
 
   } catch (err) {
     console.error("Edit log error:", err);
@@ -95,22 +115,25 @@ ${getAttachments(newMsg)}`
 // 🗑️ Delete log
 async function logDelete(client, message) {
   try {
-    if (!message?.author || message.author.bot) return;
+    if (
+      !message ||
+      !message.author ||
+      message.author.bot ||
+      message.webhookId
+    ) return;
 
     const channelName = message.channel?.name || "unknown";
     const serverName = message.guild?.name || "DM";
 
-    await sendLog(
-      client,
-      LOG_CHANNEL_DELETE,
-      `🗑️ **DELETE**
-SERVER: ${serverName}
-CHANNEL: #${channelName}
-USER: ${message.author.tag}
+    const content =
+      `🗑️ **DELETE**\n` +
+      `SERVER: ${serverName}\n` +
+      `CHANNEL: #${channelName}\n` +
+      `USER: ${message.author.tag} (${message.author.id})\n\n` +
+      `${trim(message.content)}` +
+      `${getAttachments(message)}`;
 
-${trim(message.content)}
-${getAttachments(message)}`
-    );
+    await sendLog(client, LOG_CHANNEL_DELETE, content);
 
   } catch (err) {
     console.error("Delete log error:", err);
@@ -120,10 +143,18 @@ ${getAttachments(message)}`
 // ❌ Error logger
 async function logError(client, error, type = "ERROR") {
   try {
-    const text =
-      `❌ **${type}**\n\`\`\`js\n${trim(error?.stack || String(error), 1800)}\n\`\`\``;
+    const errorText =
+      error?.stack ||
+      error?.message ||
+      String(error);
 
-    await sendLog(client, LOG_CHANNEL_ERROR, text);
+    const content =
+      `❌ **${type}**\n` +
+      "```js\n" +
+      trim(errorText, 1800) +
+      "\n```";
+
+    await sendLog(client, LOG_CHANNEL_ERROR, content);
 
   } catch (err) {
     console.error("Failed to send error log:", err);
