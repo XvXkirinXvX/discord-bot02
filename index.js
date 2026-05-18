@@ -320,7 +320,7 @@ const specialGoodbyes = {
   "639916489629237258": "yaah, mas abu nya pergi🙁",
   "701695703449075752": "why leave icad?😭",
   "596959504349003786": "k-kok kamu keluar?😣",
-  "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁"
+  "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁 (atau rest well jika kamu mau istirahat)"
   
 };
 
