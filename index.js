@@ -315,19 +315,25 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     if (!logChannel) return;
 
     // ✅ Joined VC
-    if (!oldState.channelId && newState.channelId) {
-      await logChannel.send(
-        `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
-      );
+  if (!oldState.channelId && newState.channelId) {
+  const logChannel = newState.channel;
+
+  await logChannel.send(
+    `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
+  );
+}
 
       console.log(`${newState.member.user.tag} joined VC`);
     }
 
     // ✅ Left VC
     else if (oldState.channelId && !newState.channelId) {
-      await logChannel.send(
-        `👋 Goodbye ${oldState.member} from **${oldState.channel.name}**`
-      );
+  const logChannel = oldState.channel;
+
+  await logChannel.send(
+    `👋 Goodbye ${oldState.member}`
+  );
+}
 
       console.log(`${oldState.member.user.tag} left VC`);
     }
