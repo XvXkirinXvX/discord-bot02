@@ -1,13 +1,25 @@
 // 🛡️ Global error protection
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', async err => {
   console.error("Unhandled Rejection:", err);
+
+  try {
+    await logError(client, err, "Unhandled Rejection");
+  } catch {}
 });
 
-process.on('uncaughtException', err => {
+process.on('uncaughtException', async err => {
   console.error("Uncaught Exception:", err);
+
+  try {
+    await logError(client, err, "Uncaught Exception");
+  } catch {}
 });
 
-const { Client, GatewayIntentBits } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  Partials
+} = require('discord.js');
 const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
 
 const {
@@ -56,6 +68,11 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates
+  ],
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction
   ]
 });
 
@@ -84,10 +101,16 @@ function connectVC(client) {
   reconnecting = true;
 
   const guild = client.guilds.cache.get(GUILD_ID);
-  if (!guild) return console.log("Guild not found");
+  if (!guild) {
+  reconnecting = false;
+  return console.log("Guild not found");
+}
 
   const channel = guild.channels.cache.get(CHANNEL_ID);
-  if (!channel) return console.log("Channel not found");
+  if (!channel) {
+  reconnecting = false;
+  return console.log("Channel not found");
+}
 
   const connection = joinVoiceChannel({
     channelId: CHANNEL_ID,
@@ -112,7 +135,11 @@ client.once('ready', () => {
   connectVC(client);
 
   // 🧹 Auto-delete reply patch (SAFE + dynamic)
-  const { Message } = require("discord.js");
+const { Message } = require("discord.js");
+
+if (!Message.prototype._autoDeletePatched) {
+  Message.prototype._autoDeletePatched = true;
+
   const originalReply = Message.prototype.reply;
 
   Message.prototype.reply = async function (...args) {
@@ -126,12 +153,53 @@ client.once('ready', () => {
 
     return msg;
   };
-
+}
   console.log(`🧹 Auto-delete system initialized (${autoDeleteEnabled ? "ON" : "OFF"})`);
 });
 
 // 🔌 Autosend utils
 const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
+
+// 📝 Message logging
+client.on('messageCreate', async message => {
+  try {
+    await logMessage(client, message);
+  } catch (err) {
+    console.error("Message log error:", err);
+  }
+});
+
+// ✏️ Edit logging
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+  try {
+    if (oldMessage.partial) {
+      try { await oldMessage.fetch(); } catch {}
+    }
+
+    if (newMessage.partial) {
+      try { await newMessage.fetch(); } catch {}
+    }
+
+    await logEdit(client, oldMessage, newMessage);
+
+  } catch (err) {
+    console.error("Edit log error:", err);
+  }
+});
+
+// 🗑️ Delete logging
+client.on('messageDelete', async message => {
+  try {
+    if (message.partial) {
+      try { await message.fetch(); } catch {}
+    }
+
+    await logDelete(client, message);
+
+  } catch (err) {
+    console.error("Delete log error:", err);
+  }
+});
 
 // 💬 Command handler
 client.on('messageCreate', async message => {
@@ -139,22 +207,6 @@ client.on('messageCreate', async message => {
   if (blockedUsers.includes(message.author.id)) return;
 
   const now = Date.now();
-
-  // 📝 Log sent messages
-client.on('messageCreate', message => {
-  logMessage(client, message);
-});
-
-// ✏️ Log edits
-client.on('messageUpdate', (oldMessage, newMessage) => {
-  logEdit(client, oldMessage, newMessage);
-});
-
-// 🗑️ Log deletes
-client.on('messageDelete', message => {
-  logDelete(client, message);
-});
-
 
   // 📣 AFK mention system
   if (message.mentions.users.size > 0) {
@@ -180,7 +232,7 @@ client.on('messageDelete', message => {
 
       try {
         await message.reply(
-          `⏰ ${message.guild.members.cache.get(user.id)?.displayName || user.username} is AFK: ${afkData.reason} (since ${timeText} ago)`
+          `⏰ ${message.guild?.members.cache.get(user.id)?.displayName || user.username} is AFK: ${afkData.reason} (since ${timeText} ago)`
         );
       } catch {}
     }
@@ -193,7 +245,7 @@ client.on('messageDelete', message => {
     const member = message.member;
 
     try {
-      if (member.manageable) {
+      if (member && member.manageable) {
         let currentNick = member.nickname || member.user.username;
         const newNick = currentNick.replace(/\[AFK\]\s*/gi, "").trim();
 
@@ -215,7 +267,7 @@ client.on('messageDelete', message => {
   }
 
   // 💬 Command system
-  const msg = message.content.trim();
+  const msg = (message.content || "").trim();
 
   if (!msg.toLowerCase().startsWith(PREFIX.toLowerCase())) return;
 
