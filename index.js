@@ -308,11 +308,11 @@ setVCGreeting: (value) => vcGreetingEnabled = value
 
 // 👥 Voice logs
 const specialGreetings = {
-  "874846881652559952": "Welcome my owner 💖",
-  "639916489629237258": "Welcome mas abu🩶",
-  "701695703449075752": "welkam icad",
-  "596959504349003786": "a-alow zar cayang UwU",
-  "581844299507826689": "welcome to the voice hime-sama, semoga betah ya💕"
+  "874846881652559952": "Welcome my owner 💖 <@874846881652559952>",
+  "639916489629237258": "Welcome mas abu🩶<@639916489629237258>",
+  "701695703449075752": "welkam icad<@701695703449075752>",
+  "596959504349003786": "a-alow zar cayang UwU<@596959504349003786>",
+  "581844299507826689": "welcome to the voice <@581844299507826689>-sama, semoga betah ya💕"
 };
 
 const specialGoodbyes = {
@@ -333,42 +333,42 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     if (newState.member?.user.id === client.user.id) return;
     if (oldState.member?.user.id === client.user.id) return;
 
-    // ✅ Joined VC
-    if (!oldState.channelId && newState.channelId) {
+   // ✅ Joined VC
+if (!oldState.channelId && newState.channelId) {
 
-      const logChannel = newState.channel;
+  const logChannel = newState.channel;
 
-      if (!logChannel?.isTextBased()) return;
+  if (!logChannel?.isTextBased()) return;
 
-      const customGreeting =
-        specialGreetings[newState.member.id];
+  const customGreeting =
+    specialGreetings[newState.member.id];
 
-      await logChannel.send(
-        customGreeting ||
-        `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
-      );
+  await logChannel.send(
+    customGreeting ||
+    `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
+  );
 
-      console.log(`${newState.member.user.tag} joined VC`);
-    }
+  console.log(`${newState.member.user.tag} joined VC`);
+}
 
-    // ✅ Left VC
-    else if (oldState.channelId && !newState.channelId) {
+// ✅ Left VC
+else if (oldState.channelId && !newState.channelId) {
 
-      const logChannel = oldState.channel;
+  const logChannel = oldState.channel;
 
-      if (!logChannel?.isTextBased()) return;
+  if (!logChannel?.isTextBased()) return;
 
-      const customGoodbye =
-  specialGoodbyes[oldState.member.id];
+  const customGoodbye =
+    specialGoodbyes[oldState.member.id];
 
-await logChannel.send(
-  customGoodbye
-    ? customGoodbye(oldState.member)
-    : `👋 Goodbye ${oldState.member.displayName}`
-);
+  await logChannel.send(
+    customGoodbye
+      ? customGoodbye(oldState.member)
+      : `👋 Goodbye ${oldState.member.displayName}`
+  );
 
-      console.log(`${oldState.member.user.tag} left VC`);
-    }
+  console.log(`${oldState.member.user.tag} left VC`);
+}
 
   } catch (err) {
     console.error("VC greeting error:", err);
