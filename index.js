@@ -363,9 +363,8 @@ else if (oldState.channelId && !newState.channelId) {
     specialGoodbyes[oldState.member.id];
 
   await logChannel.send(
-    customGoodbye
-      ? customGoodbye(oldState.member)
-      : `👋 Goodbye ${oldState.member.displayName}`
+    customGoodbye ||
+    `👋 Goodbye ${oldState.member.displayName}`
   );
 
   console.log(`${oldState.member.user.tag} left VC`);
