@@ -161,13 +161,13 @@ if (!Message.prototype._autoDeletePatched) {
 const { startAutoMessage, stopAutoMessage } = require('./utils/autosend');
 
 // 📝 Message logging
-client.on('messageCreate', async message => {
-  try {
-    await logMessage(client, message);
-  } catch (err) {
-    console.error("Message log error:", err);
-  }
-});
+//client.on('messageCreate', async message => {
+ // try {
+  //  await logMessage(client, message);
+//  } catch (err) {
+//    console.error("Message log error:", err);
+//  }
+//});
 
 // ✏️ Edit logging
 client.on('messageUpdate', async (oldMessage, newMessage) => {
