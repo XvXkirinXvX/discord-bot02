@@ -304,13 +304,34 @@ client.on('messageCreate', async message => {
 });
 
 // 👥 Voice logs
-client.on('voiceStateUpdate', (oldState, newState) => {
-  if (!oldState.channelId && newState.channelId) {
-    console.log(`${newState.member.user.tag} joined VC`);
-  }
+client.on('voiceStateUpdate', async (oldState, newState) => {
+  if (!vcGreetingEnabled) return;
 
-  if (oldState.channelId && !newState.channelId) {
-    console.log(`${oldState.member.user.tag} left VC`);
+  try {
+    const logChannel = newState.guild.systemChannel;
+
+    if (!logChannel) return;
+
+    // ✅ Joined VC
+    if (!oldState.channelId && newState.channelId) {
+      await logChannel.send(
+        `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
+      );
+
+      console.log(`${newState.member.user.tag} joined VC`);
+    }
+
+    // ✅ Left VC
+    else if (oldState.channelId && !newState.channelId) {
+      await logChannel.send(
+        `👋 Goodbye ${oldState.member} from **${oldState.channel.name}**`
+      );
+
+      console.log(`${oldState.member.user.tag} left VC`);
+    }
+
+  } catch (err) {
+    console.error("VC greeting error:", err);
   }
 });
 
