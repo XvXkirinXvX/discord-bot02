@@ -1,8 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+
 const {
   LOG_CHANNEL_MESSAGE,
   LOG_CHANNEL_EDIT,
   LOG_CHANNEL_DELETE,
-  LOG_CHANNEL_ERROR
+  LOG_CHANNEL_ERROR,
+  LOG_ALLOWED_CHANNELS
 } = require('../config');
 
 // ✂️ Prevent Discord 2000 char limit
@@ -12,6 +16,18 @@ function trim(text = "", max = 1800) {
   return safe.length > max
     ? safe.slice(0, max) + "... [TRUNCATED]"
     : safe;
+}
+
+// ✅ Allowed channel filter
+function isAllowedChannel(message) {
+  try {
+    if (!message?.channelId) return false;
+
+    return LOG_ALLOWED_CHANNELS.includes(message.channelId);
+
+  } catch {
+    return false;
+  }
 }
 
 // 📎 Attachment formatter
@@ -32,19 +48,52 @@ function getAttachments(message) {
   }
 }
 
+// 💾 Save logs to file
+function saveLogToFile(channelName, content) {
+  try {
+    const safeName = String(channelName || "unknown")
+      .replace(/[^a-z0-9-_]/gi, '_')
+      .toLowerCase()
+      .slice(0, 100);
+
+    const logsDir = path.join(__dirname, '..', 'logs');
+
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+
+    const filePath = path.join(
+      logsDir,
+      `${safeName}.log`
+    );
+
+    const timestamp = new Date().toISOString();
+
+    fs.appendFileSync(
+      filePath,
+      `[${timestamp}]\n${content}\n\n`
+    );
+
+  } catch (err) {
+    console.error("File log error:", err);
+  }
+}
+
 // 📤 Send log safely
 async function sendLog(client, channelId, content) {
   try {
     if (!client || !channelId) return;
 
-    const channel = await client.channels.fetch(channelId).catch(() => null);
+    const channel = await client.channels
+      .fetch(channelId)
+      .catch(() => null);
 
     if (!channel || !channel.isTextBased()) return;
 
-   await channel.send({
-  content: trim(content, 1900),
-  allowedMentions: { parse: [] }
-});
+    await channel.send({
+      content: trim(content, 1900),
+      allowedMentions: { parse: [] }
+    });
 
   } catch (err) {
     console.error("Log send error:", err);
@@ -61,6 +110,8 @@ async function logMessage(client, message) {
       message.webhookId
     ) return;
 
+    if (!isAllowedChannel(message)) return;
+
     const channelName = message.channel?.name || "unknown";
     const serverName = message.guild?.name || "DM";
 
@@ -72,6 +123,8 @@ async function logMessage(client, message) {
       `${trim(message.content)}${getAttachments(message)}`;
 
     await sendLog(client, LOG_CHANNEL_MESSAGE, content);
+
+    saveLogToFile(channelName, content);
 
   } catch (err) {
     console.error("Message log error:", err);
@@ -89,8 +142,13 @@ async function logEdit(client, oldMsg, newMsg) {
       newMsg.webhookId
     ) return;
 
+    if (!isAllowedChannel(newMsg)) return;
+
+    const oldContent = (oldMsg.content || "").trim();
+    const newContent = (newMsg.content || "").trim();
+
     // Ignore unchanged edits
-    if ((oldMsg.content || "") === (newMsg.content || "")) return;
+    if (oldContent === newContent) return;
 
     const channelName = newMsg.channel?.name || "unknown";
     const serverName = newMsg.guild?.name || "DM";
@@ -100,12 +158,14 @@ async function logEdit(client, oldMsg, newMsg) {
       `SERVER: ${serverName}\n` +
       `CHANNEL: #${channelName}\n` +
       `USER: ${newMsg.author.tag} (${newMsg.author.id})\n\n` +
-      `BEFORE:\n${trim(oldMsg.content)}\n\n` +
-      `AFTER:\n${trim(newMsg.content)}` +
-      `\n\nOLD ATTACHMENTS:${getAttachments(oldMsg) || "\nNone"}\n` +
-`\nNEW ATTACHMENTS:${getAttachments(newMsg) || "\nNone"}`;
+      `BEFORE:\n${trim(oldContent)}\n\n` +
+      `AFTER:\n${trim(newContent)}\n\n` +
+      `OLD ATTACHMENTS:${getAttachments(oldMsg) || "\nNone"}\n\n` +
+      `NEW ATTACHMENTS:${getAttachments(newMsg) || "\nNone"}`;
 
     await sendLog(client, LOG_CHANNEL_EDIT, content);
+
+    saveLogToFile(channelName, content);
 
   } catch (err) {
     console.error("Edit log error:", err);
@@ -122,6 +182,8 @@ async function logDelete(client, message) {
       message.webhookId
     ) return;
 
+    if (!isAllowedChannel(message)) return;
+
     const channelName = message.channel?.name || "unknown";
     const serverName = message.guild?.name || "DM";
 
@@ -134,6 +196,8 @@ async function logDelete(client, message) {
       `${getAttachments(message)}`;
 
     await sendLog(client, LOG_CHANNEL_DELETE, content);
+
+    saveLogToFile(channelName, content);
 
   } catch (err) {
     console.error("Delete log error:", err);
