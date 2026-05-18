@@ -9,11 +9,6 @@ process.on('uncaughtException', err => {
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
-const {
-  logMessage,
-  logEdit,
-  logDelete
-} = require('./utils/logger');
 
 const AUTO_DELETE_DELAY = 60000;
 let autoDeleteEnabled = process.env.NODE_ENV !== "production";
@@ -137,21 +132,6 @@ client.on('messageCreate', async message => {
   if (blockedUsers.includes(message.author.id)) return;
 
   const now = Date.now();
-
-  // 📝 Log sent messages
-client.on('messageCreate', message => {
-  logMessage(message);
-});
-
-// ✏️ Log edits
-client.on('messageUpdate', (oldMessage, newMessage) => {
-  logEdit(oldMessage, newMessage);
-});
-
-// 🗑️ Log deletes
-client.on('messageDelete', message => {
-  logDelete(message);
-});
 
   // 📣 AFK mention system
   if (message.mentions.users.size > 0) {
