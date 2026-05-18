@@ -31,6 +31,7 @@ const {
 
 const AUTO_DELETE_DELAY = 60000;
 let autoDeleteEnabled = process.env.NODE_ENV !== "production";
+let vcGreetingEnabled = true;
 
 const afkUsers = new Map();
 const afkCooldown = new Map();
@@ -310,30 +311,31 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
   if (!vcGreetingEnabled) return;
 
   try {
-    const logChannel = newState.guild.systemChannel;
 
-    if (!logChannel) return;
+    // ✅ User joined VC
+    if (!oldState.channelId && newState.channelId) {
 
-    // ✅ Joined VC
-  if (!oldState.channelId && newState.channelId) {
-  const logChannel = newState.channel;
+      const logChannel = newState.channel;
 
-  await logChannel.send(
-    `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
-  );
-}
+      if (logChannel?.isTextBased()) {
+        await logChannel.send(
+          `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
+        );
+      }
 
       console.log(`${newState.member.user.tag} joined VC`);
     }
 
-    // ✅ Left VC
+    // ✅ User left VC
     else if (oldState.channelId && !newState.channelId) {
-  const logChannel = oldState.channel;
 
-  await logChannel.send(
-    `👋 Goodbye ${oldState.member}`
-  );
-}
+      const logChannel = oldState.channel;
+
+      if (logChannel?.isTextBased()) {
+        await logChannel.send(
+          `👋 Goodbye ${oldState.member}`
+        );
+      }
 
       console.log(`${oldState.member.user.tag} left VC`);
     }
