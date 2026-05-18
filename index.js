@@ -293,7 +293,9 @@ client.on('messageCreate', async message => {
       connectVC,
       afkUsers,
       getAutoDelete: () => autoDeleteEnabled,
-      setAutoDelete: (value) => autoDeleteEnabled = value
+      setAutoDelete: (value) => autoDeleteEnabled = value,
+getVCGreeting: () => vcGreetingEnabled,
+setVCGreeting: (value) => vcGreetingEnabled = value
     });
   } catch (err) {
     console.error("Command error:", err);
