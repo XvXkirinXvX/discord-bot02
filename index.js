@@ -138,6 +138,21 @@ client.on('messageCreate', async message => {
 
   const now = Date.now();
 
+  // 📝 Log sent messages
+client.on('messageCreate', message => {
+  logMessage(message);
+});
+
+// ✏️ Log edits
+client.on('messageUpdate', (oldMessage, newMessage) => {
+  logEdit(oldMessage, newMessage);
+});
+
+// 🗑️ Log deletes
+client.on('messageDelete', message => {
+  logDelete(message);
+});
+
   // 📣 AFK mention system
   if (message.mentions.users.size > 0) {
     for (const user of message.mentions.users.values()) {
