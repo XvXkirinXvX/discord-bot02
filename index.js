@@ -354,7 +354,8 @@ if (!oldState.channelId && newState.channelId) {
 // ✅ Left VC
 else if (oldState.channelId && !newState.channelId) {
 
-  const logChannel = oldState.channel;
+  const logChannel =
+    oldState.guild.channels.cache.get(oldState.channelId);
 
   if (!logChannel?.isTextBased()) return;
 
