@@ -13,7 +13,8 @@ const { OWNER_ID, PREFIX, GUILD_ID, CHANNEL_ID } = require('./config');
 const {
   logMessage,
   logEdit,
-  logDelete
+  logDelete,
+  logError
 } = require('./utils/discordLogger');
 
 const AUTO_DELETE_DELAY = 60000;
