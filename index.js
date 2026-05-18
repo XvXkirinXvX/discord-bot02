@@ -359,12 +359,13 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
       if (!logChannel?.isTextBased()) return;
 
       const customGoodbye =
-        specialGoodbyes[oldState.member.id];
+  specialGoodbyes[oldState.member.id];
 
-      await logChannel.send(
-        customGoodbye ||
-        `👋 Goodbye ${oldState.member}`
-      );
+await logChannel.send(
+  customGoodbye
+    ? customGoodbye(oldState.member)
+    : `👋 Goodbye ${oldState.member.displayName}`
+);
 
       console.log(`${oldState.member.user.tag} left VC`);
     }
