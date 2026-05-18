@@ -307,35 +307,64 @@ setVCGreeting: (value) => vcGreetingEnabled = value
 });
 
 // 👥 Voice logs
+const specialGreetings = {
+  "874846881652559952": "Welcome my owner 💖",
+  "639916489629237258": "Welcome mas abu🩶",
+  "701695703449075752": "welkam icad",
+  "596959504349003786": "a-alow zar cayang UwU",
+  "581844299507826689": "welcome to the voice hime-sama, semoga betah ya💕"
+};
+
+const specialGoodbyes = {
+  "874846881652559952": "Babay owner👋",
+  "639916489629237258": "yaah, mas abu nya pergi🙁",
+  "701695703449075752": "why leave icad?😭",
+  "596959504349003786": "k-kok kamu keluar?😣",
+  "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁"
+  
+};
+
 client.on('voiceStateUpdate', async (oldState, newState) => {
   if (!vcGreetingEnabled) return;
 
   try {
 
-    // ✅ User joined VC
+    // ❌ Ignore bot itself
+    if (newState.member?.user.id === client.user.id) return;
+    if (oldState.member?.user.id === client.user.id) return;
+
+    // ✅ Joined VC
     if (!oldState.channelId && newState.channelId) {
 
       const logChannel = newState.channel;
 
-      if (logChannel?.isTextBased()) {
-        await logChannel.send(
-          `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
-        );
-      }
+      if (!logChannel?.isTextBased()) return;
+
+      const customGreeting =
+        specialGreetings[newState.member.id];
+
+      await logChannel.send(
+        customGreeting ||
+        `🎤 Welcome ${newState.member} to **${newState.channel.name}**`
+      );
 
       console.log(`${newState.member.user.tag} joined VC`);
     }
 
-    // ✅ User left VC
+    // ✅ Left VC
     else if (oldState.channelId && !newState.channelId) {
 
       const logChannel = oldState.channel;
 
-      if (logChannel?.isTextBased()) {
-        await logChannel.send(
-          `👋 Goodbye ${oldState.member}`
-        );
-      }
+      if (!logChannel?.isTextBased()) return;
+
+      const customGoodbye =
+        specialGoodbyes[oldState.member.id];
+
+      await logChannel.send(
+        customGoodbye ||
+        `👋 Goodbye ${oldState.member}`
+      );
 
       console.log(`${oldState.member.user.tag} left VC`);
     }
