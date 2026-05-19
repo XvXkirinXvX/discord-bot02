@@ -333,8 +333,23 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     if (newState.member?.user.id === client.user.id) return;
     if (oldState.member?.user.id === client.user.id) return;
 
+    // 🎤 Bot current VC
+const botVC =
+  oldState.guild.members.me?.voice?.channelId;
+
+if (!botVC) return;
+
+    // Ignore VC switching
+if (
+  oldState.channelId &&
+  newState.channelId
+) return;
+
    // ✅ Joined VC
-if (!oldState.channelId && newState.channelId) {
+if (
+  !oldState.channelId &&
+  newState.channelId === botVC
+) {
 
   const logChannel = newState.channel;
 
@@ -352,7 +367,10 @@ if (!oldState.channelId && newState.channelId) {
 }
 
 // ✅ Left VC
-else if (oldState.channelId && !newState.channelId) {
+else if (
+  oldState.channelId === botVC &&
+  !newState.channelId
+) {
 
   const logChannel =
     oldState.guild.channels.cache.get(oldState.channelId);
