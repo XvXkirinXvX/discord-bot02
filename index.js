@@ -312,15 +312,21 @@ const specialGreetings = {
   "639916489629237258": "Welcome mas abu🩶<@639916489629237258>",
   "701695703449075752": "welkam icad<@701695703449075752>",
   "596959504349003786": "a-alow zar cayang UwU<@596959504349003786>",
-  "581844299507826689": "welcome to the voice <@581844299507826689>-sama, semoga betah ya💕"
+  "581844299507826689": "welcome to the voice <@581844299507826689>-sama, semoga betah ya💕",
+  "1495677921514356796": "welcome ya buronan server esp <@1495677921514356796>",
+  "1463147288237969489": "welcome ya buronan server esp <@1463147288237969489>",
+  "1314831779890462761": "alo blower <@1314831779890462761>"
 };
 
 const specialGoodbyes = {
   "874846881652559952": "Babay owner👋",
   "639916489629237258": "yaah, mas abu nya pergi🙁",
   "701695703449075752": "why leave icad?😭",
-  "596959504349003786": "k-kok kamu keluar?😣",
-  "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁 (atau rest well jika kamu mau istirahat)"
+  "596959504349003786": "k-kok kamu keluar cinta?😣",
+  "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁 (atau rest well jika kamu mau istirahat)",
+  "1495677921514356796": "ketangkep kah buronan satu ini?",
+  "1463147288237969489": "ketangkep kah buronan satu ini?",
+  "1314831779890462761": "peniup handal telah pergi"
   
 };
 
@@ -334,16 +340,16 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     if (oldState.member?.user.id === client.user.id) return;
 
     // 🎤 Bot current VC
-const botVC =
-  oldState.guild.members.me?.voice?.channelId;
+//const botVC =
+  //oldState.guild.members.me?.voice?.channelId;
 
-if (!botVC) return;
+//if (!botVC) return;
 
     // Ignore VC switching
-if (
-  oldState.channelId &&
-  newState.channelId
-) return;
+//if (
+ // oldState.channelId &&
+ // newState.channelId
+//) return;
 
    // ✅ Joined VC
 if (
