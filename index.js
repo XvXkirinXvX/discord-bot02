@@ -340,16 +340,16 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     if (oldState.member?.user.id === client.user.id) return;
 
     // 🎤 Bot current VC
-//const botVC =
-  //oldState.guild.members.me?.voice?.channelId;
+const botVC =
+  oldState.guild.members.me?.voice?.channelId;
 
-//if (!botVC) return;
+if (!botVC) return;
 
     // Ignore VC switching
-//if (
- // oldState.channelId &&
- // newState.channelId
-//) return;
+if (
+  oldState.channelId &&
+  newState.channelId
+) return;
 
    // ✅ Joined VC
 if (
