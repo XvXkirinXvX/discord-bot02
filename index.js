@@ -310,7 +310,7 @@ setVCGreeting: (value) => vcGreetingEnabled = value
 const specialGreetings = {
   "874846881652559952": "Welcome my owner 💖 <@874846881652559952>",
   "639916489629237258": "Welcome mas abu🩶<@639916489629237258>",
-  "701695703449075752": "welkam doraemon botak hitam legam🖤<@701695703449075752>",
+  "701695703449075752": "welkam timtam🖤<@701695703449075752>",
   "596959504349003786": "a-alow zar cayang UwU<@596959504349003786>",
   "581844299507826689": "welcome to the voice <@581844299507826689>-sama, semoga betah ya💕",
   "1495677921514356796": "welcome ya buronan server esp <@1495677921514356796>",
