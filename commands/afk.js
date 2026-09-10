@@ -1,4 +1,3 @@
-```js
 module.exports = {
   name: "afk",
 
@@ -58,4 +57,3 @@ module.exports = {
     }
   }
 };
-```
