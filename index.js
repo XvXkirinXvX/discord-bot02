@@ -314,8 +314,9 @@ const specialGreetings = {
   "596959504349003786": "a-alow zar cayang UwU<@596959504349003786>",
   "581844299507826689": "welcome to the voice <@581844299507826689>-sama, semoga betah ya💕",
   "1495677921514356796": "welcome ya buronan server esp <@1495677921514356796>",
-  "1463147288237969489": "welcome ya buronan server esp <@1463147288237969489>",
-  "1314831779890462761": "alo blower <@1314831779890462761>"
+  "1463147288237969489": "welcome ya buronan dunia <@1463147288237969489>",
+  "1314831779890462761": "alo blower <@1314831779890462761>",
+  "1371531736042700932": "💕halo my casan ku sayang~💕 <@1371531736042700932>"
 };
 
 const specialGoodbyes = {
@@ -326,7 +327,8 @@ const specialGoodbyes = {
   "581844299507826689": "semangat hime untuk melakukan aktivitas mu😁 (atau rest well jika kamu mau istirahat)",
   "1495677921514356796": "ketangkep kah buronan satu ini?",
   "1463147288237969489": "ketangkep kah buronan satu ini?",
-  "1314831779890462761": "peniup handal telah pergi"
+  "1314831779890462761": "peniup handal telah pergi",
+  "1371531736042700932": "yah my bebeb sayang keluar 😭😭"
   
 };
 
